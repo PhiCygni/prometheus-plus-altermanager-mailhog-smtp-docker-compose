@@ -1,0 +1,21 @@
+global:
+  scrape_interval:     15s # How frequently to scrape targets from this job.
+  evaluation_interval: 15s # How frequently to evaluate rules.
+
+  external_labels:
+    monitor: 'phi-cygni-monitor'
+
+rule_files:
+  - 'prometheus.rules.yml'
+
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      - 'phi-cygni-prometheus-alertmanager-container:9093'
+
+scrape_configs:
+  - job_name: 'prometheus'
+
+    static_configs:
+      - targets: ['phi-cygni-prometheus-container:9090', 'phi-cygni-python-prometheus-client-container:8000']

@@ -1,0 +1,11 @@
+groups:
+  - name: alert_rules
+    rules:
+      - alert: InstanceDown
+        expr: up == 0
+        for: 5s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Instance [{{ $labels.instance }}] down"
+          description: "[{{ $labels.instance }}] of job [{{ $labels.job }}] is down."

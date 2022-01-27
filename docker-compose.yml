@@ -1,0 +1,73 @@
+# https://phicygni.com/
+# https://github.com/PhiCygni
+
+version: "3"
+services:
+  # This container contains the Prometheus server
+  phi-cygni-prometheus-container:
+    image: prom/prometheus:v2.30.3
+    container_name: phi-cygni-prometheus-container
+    restart: 'no'
+    volumes:
+      - ./config:/etc/prometheus
+    networks:
+      - psi-cygni-prometheus-network
+    ports:
+      - "9090:9090"
+
+  # This container contains the Prometheus Alertmanager server
+  phi-cygni-prometheus-alertmanager-container:
+    image: prom/alertmanager:v0.23.0
+    container_name: phi-cygni-prometheus-alertmanager-container
+    restart: 'no'
+    volumes:
+      - ./config_alertmanager:/etc/alertmanager
+    networks:
+      - psi-cygni-prometheus-network
+    ports:
+      - "9093:9093"
+
+  # This container contains the Mailhog SMTP test server
+  phi-cygni-mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: phi-cygni-mailhog
+    restart: 'no'
+    networks:
+      - psi-cygni-prometheus-network
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  # This container contains the Python code running the Prometheus client code
+  phi-cygni-python-prometheus-client-container:
+    build: ./python
+    image: phi-cygni-python-prometheus-client-image:1.0.0
+    container_name: phi-cygni-python-prometheus-client-container
+    command: sh -c "pip install -r requirements.txt && python test_prometheus_client.py"
+    restart: 'no'
+    volumes:
+      - ./python:/root/python-prometheus-client
+    networks:
+      - psi-cygni-prometheus-network
+    ports:
+      - "8000:8000"
+
+  # This container contains the TLS SMTP server which connects to the Mailhog server
+  phi-cygni-stunnel:
+    image: dweomer/stunnel:latest
+    container_name: phi-cygni-stunnel
+    restart: 'no'
+    environment:
+      - STUNNEL_SERVICE=smtps
+      - STUNNEL_ACCEPT=465
+      - STUNNEL_CONNECT=phi-cygni-mailhog:1025
+    ports:
+      - "465:465"
+    networks:
+      - psi-cygni-prometheus-network
+
+
+
+networks:
+  psi-cygni-prometheus-network:
+    driver: bridge

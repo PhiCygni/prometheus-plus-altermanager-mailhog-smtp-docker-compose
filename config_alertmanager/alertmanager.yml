@@ -1,0 +1,37 @@
+global:
+  resolve_timeout: 5m
+  smtp_hello: 'example.com'
+
+route:
+  group_by: ['alertname']
+  
+  # How long to initially wait to send a notification for a group of alerts
+  group_wait: 0s
+
+  # How long to wait before sending a notification about new alerts that are 
+  # added to a group of alerts for which an initial notification has already 
+  # been sent. (Usually ~5m or more.)
+  group_interval: 1s
+
+  # How long to wait before sending a notification again if it has already
+  # been sent successfully for an alert. (Usually ~3h or more).
+  repeat_interval: 60s
+  receiver: 'email'
+receivers:
+- name: 'email'
+  email_configs:
+  - to: 'alerts@example.com'
+    from: 'alerts@example.com'
+    smarthost: phi-cygni-stunnel:465
+    auth_username: 'alerts@example.com'
+    auth_identity: 'alerts@example.com'
+    auth_password: 'password'
+    require_tls: false
+    tls_config:
+      insecure_skip_verify: true
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'dev', 'instance']
